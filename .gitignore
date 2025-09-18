@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+
+# DVC metadata we DO want to keep:
+/.dvc/cache/
+/.dvc/tmp/
+
+# Don’t ignore the whole .dvc folder
+# Instead, only ignore the heavy cache and temp
+# Keep configs and pipelines under git
+
+!.dvc
+
+# DVC artifacts
+*.dvc
+/data/*.csv
+/model/*.keras
+/model/*.pkl
+/metrics/*.json
+
+*.ipynb
+.DS_Store
