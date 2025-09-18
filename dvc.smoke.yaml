@@ -1,0 +1,51 @@
+stages:
+  prepare_data_smoke:
+    cmd: >
+      python scripts/prepare_data.py
+      --in data/smoke.csv
+      --out data/processed_smoke.parquet
+    deps:
+      - scripts/prepare_data.py
+      - data/smoke.csv
+    outs:
+      - data/processed_smoke.parquet
+
+  train_smoke:
+    cmd: >
+      python scripts/train.py
+      --data data/processed_smoke.parquet
+      --model-dir model
+    deps:
+      - scripts/train.py
+      - data/processed_smoke.parquet
+      - params.yaml
+    params:
+      - training.batch_size
+      - training.epochs
+      - training.learning_rate
+      - training.threshold
+      - training.female_label_id
+      - training.validation_split
+      - training.random_state
+    outs:
+      - model/gender_model.keras
+      - model/prenom_encoder.pkl
+    metrics:
+      - metrics/train.json:
+          cache: false
+
+  eval_smoke:
+    cmd: >
+      python scripts/eval.py
+      --data data/processed_smoke.parquet
+      --model model/gender_model.keras
+      --encoder model/prenom_encoder.pkl
+      --metrics-out metrics/eval_smoke.json
+    deps:
+      - scripts/eval.py
+      - data/processed_smoke.parquet
+      - model/gender_model.keras
+      - model/prenom_encoder.pkl
+    metrics:
+      - metrics/eval_smoke.json:
+          cache: false

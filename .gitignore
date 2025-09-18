@@ -13,7 +13,6 @@ __pycache__/
 !.dvc
 
 # DVC artifacts
-*.dvc
 /data/*.csv
 /model/*.keras
 /model/*.pkl
