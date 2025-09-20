@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Gender Prediction</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>Gender by First Name</h1>
+
+    <section class="card">
+      <label for="nameInput" class="label">First name</label>
+      <div class="row">
+        <input id="nameInput" type="text" placeholder="Type a first name…" />
+        <button id="btnPredict">Predict</button>
+      </div>
+      <p class="hint">TensorFlow model prediction and gender probability estimation.</p>
+
+      <div id="result" class="result" hidden>
+        <div class="summary">
+          <span class="badge" id="predLabel">—</span>
+          <span id="predName" class="muted"></span>
+        </div>
+
+        <div class="probs">
+          <div class="prob-row">
+            <span>Female</span>
+            <span id="probF" class="mono">—</span>
+          </div>
+          <div class="bar">
+            <div id="barF" class="bar-f" style="width:0%"></div>
+          </div>
+
+          <div class="prob-row">
+            <span>Male</span>
+            <span id="probM" class="mono">—</span>
+          </div>
+          <div class="bar">
+            <div id="barM" class="bar-m" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="probs" style="margin-top:14px;">
+        <div class="prob-row">
+            <span class="muted">Gender distribution of typed first name</span>
+            <span></span>
+        </div>
+        <div class="prob-row">
+            <span>Female</span>
+            <span id="distF" class="mono">—</span>
+        </div>
+        <div class="bar">
+            <div id="barDistF" class="bar-f" style="width:0%"></div>
+        </div>
+
+        <div class="prob-row">
+            <span>Male</span>
+            <span id="distM" class="mono">—</span>
+        </div>
+        <div class="bar">
+            <div id="barDistM" class="bar-m" style="width:0%"></div>
+        </div>
+        </div>
+
+
+        <p class="tiny muted">
+          Threshold: <span id="thr">—</span>
+        </p>
+      </div>
+
+      <p id="error" class="error" hidden></p>
+    </section>
+  </main>
+
+  <script>
+    const btn = document.getElementById("btnPredict");
+    const input = document.getElementById("nameInput");
+    const $ = (id) => document.getElementById(id);
+
+    async function predict() {
+      const name = input.value.trim();
+      if (!name) return;
+      $("error").hidden = true;
+      $("result").hidden = true;
+
+      try {
+        const r = await fetch("/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ preusuel: name })
+        });
+        if (!r.ok) {
+          const t = await r.text();
+          $("error").textContent = `Error: ${t}`;
+          $("error").hidden = false;
+          return;
+        }
+        const data = await r.json();
+
+        $("predLabel").textContent = data.gender;
+        $("predLabel").className = "badge " + (data.gender === "F" ? "f" : "m");
+        $("predName").textContent = `for “${data.input}”`;
+        $("probF").textContent = (data.prob_f * 100).toFixed(2) + "%";
+        $("probM").textContent = (data.prob_m * 100).toFixed(2) + "%";
+        $("barF").style.width = (data.prob_f * 100).toFixed(1) + "%";
+        $("barM").style.width = (data.prob_m * 100).toFixed(1) + "%";
+        $("thr").textContent = data.threshold?.toFixed ? data.threshold.toFixed(2) : data.threshold;
+
+        if (typeof data.dist_f === "number" && typeof data.dist_m === "number") {
+      $("distF").textContent = (data.dist_f * 100).toFixed(2) + "%";
+      $("distM").textContent = (data.dist_m * 100).toFixed(2) + "%";
+      $("barDistF").style.width = (data.dist_f * 100).toFixed(1) + "%";
+      $("barDistM").style.width = (data.dist_m * 100).toFixed(1) + "%";
+        }
+
+        $("result").hidden = false;
+      } catch (e) {
+        $("error").textContent = "Network or server error.";
+        $("error").hidden = false;
+      }
+    }
+
+    btn.addEventListener("click", predict);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") predict();
+    });
+  </script>
+</body>
+</html>
