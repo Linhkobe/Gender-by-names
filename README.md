@@ -3,7 +3,7 @@
 ## 1. About the project 
 A FastAPI + TensorFlow web service to predict gender probabilities from first names (the neural network model was trained with french firt names dataset), packaged with Docker and deployed on Google Cloud Run. 
 
-Here is the deployed link : https://gender-by-name-872658504688.europe-west1.run.app/ 
+Here is the deployed link (would take few moments to open) : https://gender-by-name-872658504688.europe-west1.run.app/ 
 
 ## 2. Features
 - Predict gender (male/female from given names)
@@ -14,6 +14,7 @@ Here is the deployed link : https://gender-by-name-872658504688.europe-west1.run
 - Production deployment via Google Cloud Run
 
 ## 3. Project structure 
+```
 gender_by_name/
 ├── app/                  # FastAPI app
 │   ├── main.py           # Entrypoint
@@ -31,7 +32,7 @@ gender_by_name/
 ├── requirements.txt
 ├── Dockerfile
 └── README.md
-
+```
 
 ## 4. Steps for local development 
 1. Clone repository
