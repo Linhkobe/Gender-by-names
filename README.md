@@ -76,7 +76,7 @@ docker run --rm -p 8000:8000 gender-by-name:v1
 3. Test in browser with http://localhost:8000
 
 
-# 6. Deployment to Google Cloud Run
+## 6. Deployment to Google Cloud Run
 
 * Create a project and get its ID via https://cloud.google.com/?hl=en as prerequisite 
 
