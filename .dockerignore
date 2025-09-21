@@ -1,0 +1,9 @@
+__pychache__/
+*.pyc
+
+notebooks/
+data/raw/
+*.ipynb
+
+.git/
+.gitignore

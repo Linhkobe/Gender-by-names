@@ -17,6 +17,9 @@ __pycache__/
 /model/*.keras
 /model/*.pkl
 /metrics/*.json
+/scripts/*.py
+/tests/*.py
+/notebooks/*.ipynb
 
 *.ipynb
 .DS_Store

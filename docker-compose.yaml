@@ -1,0 +1,52 @@
+version: '3.9'
+
+x-app-env: &app_env
+  DATA_PATH: ${DATA_PATH:-/app/data/dpt2022.csv}
+  THRESHOLD: ${THRESHOLD:-0.5}
+
+networks:
+  appnet: 
+
+services:
+  proxy:
+    image: nginx:stable
+    depends_on:
+      - app_blue
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - appnet
+
+  app_blue:
+    image: gender-by-name:v1
+    environment: *app_env
+    volumes:
+      - ./data:/app/data:ro
+      - ./models:/app/models:ro
+    expose:
+      - "8000"
+    networks: [appnet]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  app_green:
+    image: gender-by-name:v2
+    environment: *app_env
+    volumes:
+      - ./data:/app/data:ro
+      - ./models:/app/models:ro
+    expose:
+      - "8000"
+    networks: [appnet]
+    deploy:
+      replicas: 0
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

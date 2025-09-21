@@ -1,0 +1,8 @@
+training:
+  batch_size: 256
+  epochs: 10
+  learning_rate: 0.001
+  threshold: 0.5
+  female_label_id: 1
+  validation_split: 0.2
+  random_state: 42

@@ -1,0 +1,79 @@
+schema: '2.0'
+stages:
+  prepare_data:
+    cmd: python scripts/prepare_data.py --in data/smoke.csv --out 
+      data/processed/smoke_processed.csv
+    deps:
+    - path: data/smoke.csv
+      hash: md5
+      md5: 03275d3a3678b75506170fcea2bc3f42
+      size: 112
+    - path: scripts/prepare_data.py
+      hash: md5
+      md5: 201b18e6c6cd045bc69fb72db2597e37
+      size: 763
+    outs:
+    - path: data/processed/smoke_processed.csv
+      hash: md5
+      md5: 8e8d3289769ca86868825b4ae24f3cc9
+      size: 2398
+  train:
+    cmd: python scripts/train.py --data data/processed/smoke_processed.csv 
+      --model-dir model
+    deps:
+    - path: data/processed/smoke_processed.csv
+      hash: md5
+      md5: 8e8d3289769ca86868825b4ae24f3cc9
+      size: 2398
+    - path: scripts/train.py
+      hash: md5
+      md5: 70d47fdb4d792be862f8156e5e012186
+      size: 2477
+    params:
+      params.yaml:
+        training.batch_size: 256
+        training.epochs: 10
+        training.female_label_id: 1
+        training.learning_rate: 0.001
+        training.random_state: 42
+        training.threshold: 0.5
+        training.validation_split: 0.2
+    outs:
+    - path: metrics/train.json
+      hash: md5
+      md5: b73b3bb9a56853f1384397b36680e73b
+      size: 176
+    - path: model/gender_model.keras
+      hash: md5
+      md5: c93e1b7e493d22adcbc5b10c6fa2228a
+      size: 35272
+    - path: model/prenom_encoder.pkl
+      hash: md5
+      md5: b2261bc01e0bf2d8ff5ccdae02a3fd43
+      size: 1866
+  eval:
+    cmd: python scripts/eval.py --data data/processed/smoke_processed.csv 
+      --model model/gender_model.keras --encoder model/prenom_encoder.pkl 
+      --metrics-out metrics/eval.json
+    deps:
+    - path: data/processed/smoke_processed.csv
+      hash: md5
+      md5: 8e8d3289769ca86868825b4ae24f3cc9
+      size: 2398
+    - path: model/gender_model.keras
+      hash: md5
+      md5: c93e1b7e493d22adcbc5b10c6fa2228a
+      size: 35272
+    - path: model/prenom_encoder.pkl
+      hash: md5
+      md5: b2261bc01e0bf2d8ff5ccdae02a3fd43
+      size: 1866
+    - path: scripts/eval.py
+      hash: md5
+      md5: 10d7add3f749385b6cc8aca90749faf0
+      size: 1194
+    outs:
+    - path: metrics/eval.json
+      hash: md5
+      md5: 5c6e45fad0dd78c35de2ec052c2fe8b3
+      size: 50

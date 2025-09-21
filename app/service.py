@@ -40,10 +40,18 @@ def _load_savedmodel_wrapped(path: str):
     print(f"[MODEL] Wrapped SavedModel (sig in={in_key}, out={out_key}) from: {path}")
     return SavedModelWrapper(sig, in_key, out_key)
 
-def _find_and_load_model():
+def _find_and_load_model()-> object:
+    # Look for SavedModel in exported_model subfolder
     saved_dir = os.path.join(MODEL_DIR, "exported_model")
     if os.path.isdir(saved_dir) and os.path.isfile(os.path.join(saved_dir, "saved_model.pb")):
         return _load_savedmodel_wrapped(saved_dir)
+
+    import glob
+    candidates = glob.glob(os.path.join(MODEL_DIR, "**", "saved_model.pb"), recursive=True)
+    if candidates:
+        discovered = os.path.dirname(candidates[0])
+        print(f"[MODEL] Found SavedModel in subfolder: {discovered}")
+        return _load_savedmodel_wrapped(discovered)
 
     keras_path = os.path.join(MODEL_DIR, "gender_model.keras")
     if os.path.isfile(keras_path):
