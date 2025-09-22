@@ -42,28 +42,6 @@
           </div>
         </div>
 
-        <div class="probs" style="margin-top:14px;">
-        <div class="prob-row">
-            <span class="muted">Gender distribution of typed first name</span>
-            <span></span>
-        </div>
-        <div class="prob-row">
-            <span>Female</span>
-            <span id="distF" class="mono">—</span>
-        </div>
-        <div class="bar">
-            <div id="barDistF" class="bar-f" style="width:0%"></div>
-        </div>
-
-        <div class="prob-row">
-            <span>Male</span>
-            <span id="distM" class="mono">—</span>
-        </div>
-        <div class="bar">
-            <div id="barDistM" class="bar-m" style="width:0%"></div>
-        </div>
-        </div>
-
 
         <p class="tiny muted">
           Threshold: <span id="thr">—</span>
@@ -108,12 +86,6 @@
         $("barM").style.width = (data.prob_m * 100).toFixed(1) + "%";
         $("thr").textContent = data.threshold?.toFixed ? data.threshold.toFixed(2) : data.threshold;
 
-        if (typeof data.dist_f === "number" && typeof data.dist_m === "number") {
-      $("distF").textContent = (data.dist_f * 100).toFixed(2) + "%";
-      $("distM").textContent = (data.dist_m * 100).toFixed(2) + "%";
-      $("barDistF").style.width = (data.dist_f * 100).toFixed(1) + "%";
-      $("barDistM").style.width = (data.dist_m * 100).toFixed(1) + "%";
-        }
 
         $("result").hidden = false;
       } catch (e) {
