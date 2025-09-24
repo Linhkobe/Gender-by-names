@@ -1,0 +1,72 @@
+name: CI (build + smoke test)
+
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    env:
+      # Build a fully-qualified Artifact Registry path safely
+      IMAGE: ${{ format('{0}-docker.pkg.dev/{1}/{2}/{3}', vars.GCP_REGION, vars.GCP_PROJECT_ID, vars.AR_REPO, vars.SERVICE_NAME) }}
+      TAG: ci-${{ github.sha }}
+      MODEL_DIR: ${{ vars.MODEL_DIR }}
+      PORT: ${{ vars.PORT }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Fail fast if any variable is missing
+      - name: Validate required variables
+        run: |
+          set -e
+          for v in GCP_REGION GCP_PROJECT_ID AR_REPO SERVICE_NAME PORT MODEL_DIR; do
+            val="${{ vars[$v] }}"
+            if [ -z "$val" ]; then
+              echo "::error ::Missing repository variable: $v"
+              exit 1
+            fi
+          done
+          echo "IMAGE=${IMAGE}"
+          [[ "${IMAGE}" == */*/*/* ]] || { echo "::error ::IMAGE not fully qualified: ${IMAGE}"; exit 1; }
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Auth to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Configure Docker to use Artifact Registry
+        run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (no push) with cache
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          tags: ${{ env.IMAGE }}:${{ env.TAG }}
+          load: true
+          platforms: linux/amd64
+          build-args: |
+            MODEL_DIR=${{ env.MODEL_DIR }}
+            PORT=${{ env.PORT }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test container (health)
+        run: |
+          docker run -d -e MODEL_DIR=${MODEL_DIR} -e PORT=${PORT} -p 8000:8000 --name app $IMAGE:$TAG
+          for i in {1..30}; do
+            sleep 2
+            if curl -fsS http://localhost:8000/health >/dev/null; then echo "Healthy"; break; fi
+            echo "Waiting..."
+          done
+          curl -fsS http://localhost:8000/health | tee /tmp/health.json
+          docker logs app --tail 200 || true
+          docker stop app

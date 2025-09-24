@@ -1,0 +1,67 @@
+name: CD (deploy to Cloud Run)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.AR_REPO }}/${{ vars.SERVICE_NAME }}
+      TAG: v${{ github.run_number }}
+      SERVICE: ${{ vars.SERVICE_NAME }}
+      REGION: ${{ vars.GCP_REGION }}
+      PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      MODEL_DIR: ${{ vars.MODEL_DIR }}
+      PORT: ${{ vars.PORT }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Auth to GCP (service account key)
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Configure Docker to use Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & Push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          tags: |
+            ${{ env.IMAGE }}:${{ env.TAG }}
+            ${{ env.IMAGE }}:latest
+          platforms: linux/amd64
+          push: true
+          build-args: |
+            MODEL_DIR=${{ env.MODEL_DIR }}
+            PORT=${{ env.PORT }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${SERVICE} \
+            --image ${IMAGE}:${TAG} \
+            --region ${REGION} \
+            --project ${PROJECT_ID} \
+            --platform managed \
+            --allow-unauthenticated \
+            --port ${PORT} \
+            --memory 1Gi \
+            --cpu 1 \
+            --timeout 600 \
+            --set-env-vars MODEL_DIR=${MODEL_DIR},VERSION=${TAG}
